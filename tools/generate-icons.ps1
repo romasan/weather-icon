@@ -5,6 +5,7 @@ $javaSource = Join-Path $PSScriptRoot 'GenerateWeatherIcons.java'
 $classesDir = Join-Path $PSScriptRoot '.generator-build'
 $backgroundDir = Join-Path $PSScriptRoot 'weather-backgrounds'
 $outputDir = Join-Path $projectRoot 'app\src\main\res\mipmap-nodpi'
+$drawableDir = Join-Path $projectRoot 'app\src\main\res\drawable-nodpi'
 $manifestFile = Join-Path $projectRoot 'app\src\main\AndroidManifest.xml'
 
 $jdkBins = [System.Collections.Generic.List[string]]::new()
@@ -34,5 +35,5 @@ if ($javacVersion -notmatch 'javac\s+(\d+)' -or [int]$Matches[1] -lt 17) {
 New-Item -ItemType Directory -Force $classesDir | Out-Null
 & $javac --release 17 -d $classesDir $javaSource
 if ($LASTEXITCODE -ne 0) { throw 'Could not compile the icon generator.' }
-& $java -cp $classesDir GenerateWeatherIcons $backgroundDir $outputDir $manifestFile
+& $java -cp $classesDir GenerateWeatherIcons $backgroundDir $outputDir $drawableDir $manifestFile
 if ($LASTEXITCODE -ne 0) { throw 'Icon generation failed.' }

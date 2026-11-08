@@ -1,0 +1,10 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/weather_rain" />
+    <item>
+        <vector android:width="128dp" android:height="128dp" android:viewportWidth="128" android:viewportHeight="128">
+            <path android:fillColor="#9B0C2341" android:pathData="M41.48,71.66 L41.48,63.16 L58.19,63.16 L58.19,71.66 L41.48,71.66 Z M78.31,83.50 L78.31,74.56 L60.16,74.56 L60.16,67.13 L79.41,38.94 L86.55,38.94 L86.55,67.09 L92.06,67.09 L92.06,74.56 L86.55,74.56 L86.55,83.50 L78.31,83.50 Z M78.31,67.09 L78.31,51.92 L68.11,67.09 L78.31,67.09 Z" />
+            <path android:fillColor="#FFFFFFFF" android:pathData="M39.98,69.16 L39.98,60.66 L56.69,60.66 L56.69,69.16 L39.98,69.16 Z M76.81,81.00 L76.81,72.06 L58.66,72.06 L58.66,64.63 L77.91,36.44 L85.05,36.44 L85.05,64.59 L90.56,64.59 L90.56,72.06 L85.05,72.06 L85.05,81.00 L76.81,81.00 Z M76.81,64.59 L76.81,49.42 L66.61,64.59 L76.81,64.59 Z" />
+            <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.21" android:pathData="M104.00,49.00 C104.00,51.76 101.76,54.00 99.00,54.00 C96.24,54.00 94.00,51.76 94.00,49.00 C94.00,46.24 96.24,44.00 99.00,44.00 C101.76,44.00 104.00,46.24 104.00,49.00 Z" />
+        </vector>
+    </item>
+</layer-list>

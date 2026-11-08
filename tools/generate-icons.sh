@@ -6,6 +6,7 @@ PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 JAVA_SOURCE="$SCRIPT_DIR/GenerateWeatherIcons.java"
 BACKGROUND_DIR="$SCRIPT_DIR/weather-backgrounds"
 OUTPUT_DIR="$PROJECT_DIR/app/src/main/res/mipmap-nodpi"
+DRAWABLE_DIR="$PROJECT_DIR/app/src/main/res/drawable-nodpi"
 MANIFEST_FILE="$PROJECT_DIR/app/src/main/AndroidManifest.xml"
 
 if [[ -n "${JAVA_HOME:-}" ]]; then
@@ -51,4 +52,4 @@ fi
 CLASSES_DIR="$(mktemp -d "${TMPDIR:-/tmp}/weather-icon-generator.XXXXXX")"
 trap 'rm -rf "$CLASSES_DIR"' EXIT
 "$JAVAC" --release 17 -d "$CLASSES_DIR" "$JAVA_SOURCE"
-"$JAVA" -cp "$CLASSES_DIR" GenerateWeatherIcons "$BACKGROUND_DIR" "$OUTPUT_DIR" "$MANIFEST_FILE"
+"$JAVA" -cp "$CLASSES_DIR" GenerateWeatherIcons "$BACKGROUND_DIR" "$OUTPUT_DIR" "$DRAWABLE_DIR" "$MANIFEST_FILE"

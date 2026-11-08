@@ -27,6 +27,16 @@ android {
         versionName = "1.0"
         buildConfigField("String", "WEATHER_API_KEY", "\"${weatherApiKey}\"")
     }
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
     buildFeatures { buildConfig = true }
 }
 
