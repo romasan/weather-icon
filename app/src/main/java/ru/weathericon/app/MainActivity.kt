@@ -222,7 +222,7 @@ private fun updateLauncherIcon(context: Context, weather: Weather) {
         weather.emoji.contains("🌫") -> "fog"
         else -> "clear"
     }
-    val t = weather.temp.coerceIn(-99, 99)
+    val t = weather.temp.coerceIn(-39, 39)
     val tempPart = if (t < 0) "m${-t}" else "p$t"
     val aliasName = ".Icon_t${tempPart}_${iconType}"
     val packageName = context.packageName
