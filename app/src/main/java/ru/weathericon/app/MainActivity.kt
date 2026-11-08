@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,20 +57,32 @@ class MainActivity : ComponentActivity() {
                 var error by remember { mutableStateOf("") }
                 var choosing by remember { mutableStateOf(city == null) }
                 val scope = rememberCoroutineScope()
+                var refreshJob by remember { mutableStateOf<Job?>(null) }
+                fun isSelectedCity(selected: City) = city?.let { it.lat == selected.lat && it.lon == selected.lon } == true
                 fun refresh(selected: City) {
-                    scope.launch {
+                    refreshJob?.cancel()
+                    refreshJob = scope.launch {
                         loading = true
+                        error = ""
                         try {
                             val fresh = withContext(Dispatchers.IO) { WeatherApi.current(selected) }
-                            weather = fresh; saveWeather(fresh); updateLauncherIcon(this@MainActivity, fresh)
-                            error = ""
-                        } catch (e: Exception) { Log.e("WeatherIcon", "Weather refresh failed", e); error = e.message ?: "Не удалось получить погоду. Проверьте сеть." }
-                        loading = false
+                            synchronized(launcherIconUpdateLock) {
+                                if (!isSelectedCity(selected)) return@launch
+                                weather = fresh; saveWeather(fresh); updateLauncherIcon(this@MainActivity, fresh, selected)
+                            }
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            Log.e("WeatherIcon", "Weather refresh failed", e)
+                            if (isSelectedCity(selected)) error = e.message ?: "Не удалось получить погоду. Проверьте сеть."
+                        } finally {
+                            if (isSelectedCity(selected)) loading = false
+                        }
                     }
                 }
-                LaunchedEffect(city?.title) {
+                LaunchedEffect(city?.lat, city?.lon, choosing) {
                     val selected = city ?: return@LaunchedEffect
-                    weather?.let { updateLauncherIcon(this@MainActivity, it) }
+                    if (choosing) return@LaunchedEffect
                     refresh(selected)
                     while (true) { delay(TimeUnit.MINUTES.toMillis(10)); refresh(selected) }
                 }
@@ -93,7 +107,7 @@ class MainActivity : ComponentActivity() {
                             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
                             if (error.isNotEmpty()) Text(error, color = Color(0xFFB45309), modifier = Modifier.padding(top = 10.dp))
                             TextButton(onClick = { refresh(city!!) }) { Text("Обновить сейчас") }
-                            TextButton(onClick = { choosing = true; query = ""; results = emptyList() }) { Text("Сменить город") }
+                            TextButton(onClick = { refreshJob?.cancel(); choosing = true; query = ""; results = emptyList() }) { Text("Сменить город") }
                             Text("Обновление в фоне зависит от ограничений Android и может происходить реже 10 минут.", color = Color(0xFF64748B), fontSize = 12.sp, modifier = Modifier.padding(top = 16.dp))
                         } else {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -116,7 +130,12 @@ class MainActivity : ComponentActivity() {
                             LazyColumn(Modifier.padding(top = 8.dp)) {
                                 items(results) { item ->
                                     Text(item.title, Modifier.fillMaxWidth().clickable {
-                                        city = item; prefs.edit().putString("name", item.name).putString("admin", item.admin).putString("country", item.country).putString("lat", item.lat.toString()).putString("lon", item.lon.toString()).apply()
+                                        refreshJob?.cancel()
+                                        synchronized(launcherIconUpdateLock) {
+                                            city = item; weather = null
+                                            prefs.edit().putString("name", item.name).putString("admin", item.admin).putString("country", item.country).putString("lat", item.lat.toString()).putString("lon", item.lon.toString())
+                                                .remove("temp").remove("code").remove("observed").remove("emoji").remove("description").apply()
+                                        }
                                         choosing = false; error = ""
                                     }.padding(vertical = 16.dp), fontSize = 17.sp)
                                     HorizontalDivider(color = Color(0xFFE2E8F0))
@@ -205,15 +224,22 @@ class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val city = try { City(p.getString("name", "")!!, p.getString("admin", "")!!, p.getString("country", "")!!, p.getString("lat", "")!!.toDouble(), p.getString("lon", "")!!.toDouble()) } catch (_: Exception) { return@withContext Result.success() }
         try {
             val w = WeatherApi.current(city)
-            p.edit().putInt("temp", w.temp).putInt("code", w.precipType).putString("observed", w.observed).putString("emoji", w.emoji).putString("description", w.description).apply()
-            updateLauncherIcon(applicationContext, w)
-            Result.success()
+            synchronized(launcherIconUpdateLock) {
+                val selectedLat = p.getString("lat", "")?.toDoubleOrNull()
+                val selectedLon = p.getString("lon", "")?.toDoubleOrNull()
+                if (selectedLat != city.lat || selectedLon != city.lon) return@withContext Result.success()
+                p.edit().putInt("temp", w.temp).putInt("code", w.precipType).putString("observed", w.observed).putString("emoji", w.emoji).putString("description", w.description).apply()
+                updateLauncherIcon(applicationContext, w, city)
+                Result.success()
+            }
         } catch (e: WeatherApiException) { Log.e("WeatherIcon", "WeatherAPI rejected the request", e); Result.failure() }
         catch (e: Exception) { Log.e("WeatherIcon", "Weather worker failed", e); Result.retry() }
     }
 }
 
-private fun updateLauncherIcon(context: Context, weather: Weather) {
+private val launcherIconUpdateLock = Any()
+
+private fun updateLauncherIcon(context: Context, weather: Weather, expectedCity: City? = null): Unit = synchronized(launcherIconUpdateLock) {
     val iconType = when {
         weather.emoji.contains("⛈") -> "storm"
         weather.emoji.contains("🌧") -> "rain"
@@ -228,16 +254,49 @@ private fun updateLauncherIcon(context: Context, weather: Weather) {
     val packageName = context.packageName
     val next = ComponentName(context, packageName + aliasName)
     val prefs = context.getSharedPreferences("weather", Context.MODE_PRIVATE)
-    val previousName = prefs.getString("active_launcher_icon", ".Icon_default") ?: ".Icon_default"
     try {
-        if (previousName == aliasName) {
-            context.packageManager.setComponentEnabledSetting(next, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
-            context.packageManager.setComponentEnabledSetting(next, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
-            return
+        if (expectedCity != null) {
+            val currentLat = prefs.getString("lat", "")?.toDoubleOrNull()
+            val currentLon = prefs.getString("lon", "")?.toDoubleOrNull()
+            if (currentLat != expectedCity.lat || currentLon != expectedCity.lon) return
         }
-        context.packageManager.setComponentEnabledSetting(next, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
-        context.packageManager.setComponentEnabledSetting(ComponentName(context, packageName + previousName), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+
+        val packageManager = context.packageManager
+        val previousName = prefs.getString("active_launcher_icon", ".Icon_default") ?: ".Icon_default"
+        val migrationNeeded = !prefs.getBoolean("launcher_aliases_cleaned", false)
+        packageManager.setComponentEnabledSetting(next, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+
+        if (migrationNeeded) {
+            val flags = PackageManager.PackageInfoFlags.of(
+                (PackageManager.GET_ACTIVITIES or PackageManager.MATCH_DISABLED_COMPONENTS).toLong()
+            )
+            val aliases = packageManager.getPackageInfo(packageName, flags).activities.orEmpty()
+                .filter { it.name.startsWith("$packageName.Icon_") }
+            for (alias in aliases) {
+                if (alias.name == next.className) continue
+                val component = ComponentName(packageName, alias.name)
+                val state = packageManager.getComponentEnabledSetting(component)
+                val defaultAliasIsEnabled = state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && alias.name.endsWith(".Icon_default")
+                if (state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || defaultAliasIsEnabled) {
+                    packageManager.setComponentEnabledSetting(component, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+                }
+            }
+            prefs.edit().putBoolean("launcher_aliases_cleaned", true).apply()
+        } else {
+            if (previousName == aliasName) {
+                packageManager.setComponentEnabledSetting(next, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+                packageManager.setComponentEnabledSetting(next, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+            } else {
+                val previous = ComponentName(context, packageName + previousName)
+                try {
+                    packageManager.setComponentEnabledSetting(previous, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+                } catch (_: IllegalArgumentException) {
+                    // The saved alias can be from an older version whose temperature range was wider.
+                }
+            }
+        }
         prefs.edit().putString("active_launcher_icon", aliasName).apply()
         Log.i("WeatherIcon", "Launcher icon changed to ${weather.temp} degrees, $iconType")
     } catch (e: Exception) { Log.e("WeatherIcon", "Unable to update launcher icon", e) }
+    Unit
 }
