@@ -2,9 +2,9 @@
     <item android:drawable="@drawable/weather_clear" />
     <item>
         <vector android:width="128dp" android:height="128dp" android:viewportWidth="128" android:viewportHeight="128">
-            <path android:fillColor="#9B0C2341" android:pathData="M41.48,71.66 L41.48,63.16 L58.19,63.16 L58.19,71.66 L41.48,71.66 Z M83.41,83.50 L74.89,83.50 L74.89,51.44 Q70.23,55.80 63.91,57.89 L63.91,50.17 Q67.23,49.08 71.14,46.05 Q75.05,43.00 76.50,38.94 L83.41,38.94 L83.41,83.50 Z" />
-            <path android:fillColor="#FFFFFFFF" android:pathData="M39.98,69.16 L39.98,60.66 L56.69,60.66 L56.69,69.16 L39.98,69.16 Z M81.91,81.00 L73.39,81.00 L73.39,48.94 Q68.73,53.30 62.41,55.39 L62.41,47.67 Q65.73,46.58 69.64,43.55 Q73.55,40.50 75.00,36.44 L81.91,36.44 L81.91,81.00 Z" />
-            <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.21" android:pathData="M104.00,49.00 C104.00,51.76 101.76,54.00 99.00,54.00 C96.24,54.00 94.00,51.76 94.00,49.00 C94.00,46.24 96.24,44.00 99.00,44.00 C101.76,44.00 104.00,46.24 104.00,49.00 Z" />
+            <path android:fillColor="#9B0C2341" android:pathData="M33.49,76.94 L33.49,68.44 L50.20,68.44 L50.20,76.94 L33.49,76.94 Z M75.41,88.78 L66.90,88.78 L66.90,56.72 Q62.24,61.08 55.91,63.17 L55.91,55.45 Q59.24,54.36 63.15,51.33 Q67.05,48.28 68.51,44.22 L75.41,44.22 L75.41,88.78 Z" />
+            <path android:fillColor="#FFFFFFFF" android:pathData="M31.99,74.44 L31.99,65.94 L48.70,65.94 L48.70,74.44 L31.99,74.44 Z M73.91,86.28 L65.40,86.28 L65.40,54.22 Q60.74,58.58 54.41,60.67 L54.41,52.95 Q57.74,51.86 61.65,48.83 Q65.55,45.78 67.01,41.72 L73.91,41.72 L73.91,86.28 Z" />
+            <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.21" android:pathData="M96.01,54.28 C96.01,57.04 93.77,59.28 91.01,59.28 C88.25,59.28 86.01,57.04 86.01,54.28 C86.01,51.52 88.25,49.28 91.01,49.28 C93.77,49.28 96.01,51.52 96.01,54.28 Z" />
         </vector>
     </item>
 </layer-list>

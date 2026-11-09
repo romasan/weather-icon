@@ -9,6 +9,7 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -19,7 +20,7 @@ import java.util.Locale;
 import javax.imageio.ImageIO;
 
 public final class GenerateWeatherIcons {
-  private static final String[] TYPES = {"clear", "rain", "snow", "mixed", "storm", "fog"};
+  private static final String[] TYPES = {"clear", "rain", "snow", "mixed", "storm", "fog", "cloudy"};
   private static final int SIZE = 128;
   private static final int MIN_TEMPERATURE = -39;
   private static final int MAX_TEMPERATURE = 39;
@@ -37,15 +38,24 @@ public final class GenerateWeatherIcons {
     for (int i = 0; i < TYPES.length; i++) {
       File source = new File(backgroundDir, "weather_" + TYPES[i] + ".png");
       backgrounds[i] = ImageIO.read(source);
-      if (backgrounds[i] == null || backgrounds[i].getWidth() != SIZE || backgrounds[i].getHeight() != SIZE) {
-        throw new IllegalArgumentException("Missing or invalid 128x128 background: " + source.getAbsolutePath());
+      if (backgrounds[i] == null) {
+        throw new IllegalArgumentException("Missing or invalid background: " + source.getAbsolutePath());
+      }
+      if (backgrounds[i].getWidth() != SIZE || backgrounds[i].getHeight() != SIZE) {
+        BufferedImage scaled = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = scaled.createGraphics();
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics.drawImage(backgrounds[i], 0, 0, SIZE, SIZE, null);
+        graphics.dispose();
+        backgrounds[i] = scaled;
+        ImageIO.write(scaled, "png", source);
       }
     }
 
     makeDirectory(mipmapDir);
     makeDirectory(drawableDir);
-    deleteGeneratedFiles(mipmapDir, "wx_t(m|p)\\d+_(clear|rain|snow|mixed|storm|fog)\\.png|wx_default\\.png");
-    deleteGeneratedFiles(drawableDir, "wx_t(m|p)\\d+_(clear|rain|snow|mixed|storm|fog)\\.xml|weather_(clear|rain|snow|mixed|storm|fog)\\.png");
+    deleteGeneratedFiles(mipmapDir, "wx_t(m|p)\\d+_(clear|rain|snow|mixed|storm|fog|cloudy)\\.png|wx_default\\.png");
+    deleteGeneratedFiles(drawableDir, "wx_t(m|p)\\d+_(clear|rain|snow|mixed|storm|fog|cloudy)\\.xml|weather_(clear|rain|snow|mixed|storm|fog|cloudy)\\.png");
 
     for (int i = 0; i < TYPES.length; i++) {
       File destination = new File(drawableDir, "weather_" + TYPES[i] + ".png");
@@ -61,7 +71,7 @@ public final class GenerateWeatherIcons {
     writeDefaultIcon(new File(mipmapDir, "wx_default.png"));
     updateManifestAliases(manifestFile);
     int count = (MAX_TEMPERATURE - MIN_TEMPERATURE + 1) * TYPES.length;
-    System.out.println("Generated " + count + " vector-overlay icons, six shared backgrounds and the default icon.");
+    System.out.println("Generated " + count + " vector-overlay icons, seven shared backgrounds and the default icon.");
   }
 
   private static void makeDirectory(File directory) {
@@ -93,13 +103,18 @@ public final class GenerateWeatherIcons {
     float x = (SIZE - metrics.stringWidth(label)) / 2f;
     GlyphVector glyphs = font.createGlyphVector(g.getFontRenderContext(), label);
     Shape text = glyphs.getOutline(x, 81f);
-    Shape shadow = AffineTransform.getTranslateInstance(1.5, 2.5).createTransformedShape(text);
 
     int degreeSize = Math.max(7, fontSize / 6);
     int degreeX = Math.round(x + metrics.stringWidth(label)) + Math.max(2, fontSize / 24);
     int degreeY = 81 - Math.round(fontSize * 0.60f);
     float degreeStroke = Math.max(1.5f, fontSize / 28f);
     Shape degree = new Ellipse2D.Float(degreeX, degreeY, degreeSize, degreeSize);
+    Rectangle2D bounds = text.getBounds2D().createUnion(degree.getBounds2D());
+    AffineTransform center = AffineTransform.getTranslateInstance(
+        SIZE / 2.0 - bounds.getCenterX(), SIZE / 2.0 - bounds.getCenterY());
+    text = center.createTransformedShape(text);
+    degree = center.createTransformedShape(degree);
+    Shape shadow = AffineTransform.getTranslateInstance(1.5, 2.5).createTransformedShape(text);
     g.dispose();
 
     String vector = "        <vector android:width=\"128dp\" android:height=\"128dp\" android:viewportWidth=\"128\" android:viewportHeight=\"128\">\n"

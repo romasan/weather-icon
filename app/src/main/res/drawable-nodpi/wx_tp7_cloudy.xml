@@ -1,0 +1,10 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/weather_cloudy" />
+    <item>
+        <vector android:width="128dp" android:height="128dp" android:viewportWidth="128" android:viewportHeight="128">
+            <path android:fillColor="#9B0C2341" android:pathData="M37.41,82.00 L37.41,70.47 L25.79,70.47 L25.79,62.50 L37.41,62.50 L37.41,50.97 L45.16,50.97 L45.16,62.50 L56.82,62.50 L56.82,70.47 L45.16,70.47 L45.16,82.00 L37.41,82.00 Z M61.85,52.52 L61.85,44.61 L90.95,44.61 L90.95,50.80 Q87.34,54.33 83.60,60.97 Q79.88,67.59 77.93,75.06 Q75.98,82.52 76.01,88.39 L67.80,88.39 Q68.02,79.19 71.60,69.63 Q75.20,60.05 81.20,52.52 L61.85,52.52 Z" />
+            <path android:fillColor="#FFFFFFFF" android:pathData="M35.91,79.50 L35.91,67.97 L24.29,67.97 L24.29,60.00 L35.91,60.00 L35.91,48.47 L43.66,48.47 L43.66,60.00 L55.32,60.00 L55.32,67.97 L43.66,67.97 L43.66,79.50 L35.91,79.50 Z M60.35,50.02 L60.35,42.11 L89.45,42.11 L89.45,48.30 Q85.84,51.83 82.10,58.47 Q78.38,65.09 76.43,72.56 Q74.48,80.02 74.51,85.89 L66.30,85.89 Q66.52,76.69 70.10,67.13 Q73.70,57.55 79.70,50.02 L60.35,50.02 Z" />
+            <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.21" android:pathData="M103.71,53.89 C103.71,56.65 101.47,58.89 98.71,58.89 C95.95,58.89 93.71,56.65 93.71,53.89 C93.71,51.13 95.95,48.89 98.71,48.89 C101.47,48.89 103.71,51.13 103.71,53.89 Z" />
+        </vector>
+    </item>
+</layer-list>

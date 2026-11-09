@@ -169,8 +169,8 @@ object WeatherApi {
         val condition = current.getJSONObject("condition")
         val code = condition.optInt("code", -1)
         val description = condition.optString("text", "Погода")
-        val precipType = precipitationType(description, current.optDouble("precip_mm", 0.0))
-        val emoji = weatherEmoji(code, precipType, current.optInt("is_day", 1) == 1)
+        val precipType = conditionType(code)
+        val emoji = weatherEmoji(code, current.optInt("is_day", 1) == 1)
         return Weather(kotlin.math.round(current.getDouble("temp_c")).toInt(), precipType,
             current.optString("last_updated"), emoji, description)
     }
@@ -188,23 +188,26 @@ object WeatherApi {
     }
 }
 
-private fun precipitationType(text: String, amount: Double): Int {
-    val t = text.lowercase()
-    val rain = listOf("rain", "drizzle", "дожд", "морос").any(t::contains)
-    val snow = listOf("snow", "sleet", "ледян", "снег").any(t::contains)
-    return when { rain && snow -> 3; snow -> 2; rain || amount > 0.0 -> 1; else -> 0 }
+/** WeatherAPI condition codes are stable across languages; don't infer icon type from localized text. */
+private fun conditionType(code: Int): Int = when (code) {
+    1000 -> 0 // clear
+    1063, 1072, 1150, 1153, 1168, 1171, 1180, 1183, 1186, 1189, 1192, 1195, 1198, 1201, 1240, 1243, 1246 -> 1 // rain
+    1066, 1114, 1117, 1210, 1213, 1216, 1219, 1222, 1225, 1255, 1258 -> 2 // snow
+    1069, 1204, 1207, 1237, 1249, 1252, 1261, 1264 -> 3 // sleet / ice pellets
+    1087, 1273, 1276, 1279, 1282 -> 4 // thunder
+    1012, 1015, 1018, 1021, 1024, 1027, 1030, 1033, 1036, 1039, 1042, 1045, 1048, 1135, 1147 -> 5 // haze / dust / fog / smoke
+    1003, 1006, 1009 -> 6 // partly cloudy / cloudy / overcast
+    else -> 6 // unknown future codes should never be shown as clear
 }
 
-private fun weatherEmoji(code: Int, precipitation: Int, isDay: Boolean): String = when {
-    code in setOf(1087, 1273, 1276, 1279, 1282) -> "⛈️"
-    precipitation == 1 -> "🌧️"
-    precipitation == 2 -> "❄️"
-    precipitation == 3 -> "🌨️"
-    code == 1000 && isDay -> "☀️"
-    code == 1000 -> "🌙"
-    code in setOf(1003, 1006, 1009) -> "☁️"
-    code in setOf(1030, 1135, 1147) -> "🌫️"
-    else -> "🌤️"
+private fun weatherEmoji(code: Int, isDay: Boolean): String = when (conditionType(code)) {
+    1 -> "🌧️"
+    2 -> "❄️"
+    3 -> "🌨️"
+    4 -> "⛈️"
+    5 -> "🌫️"
+    6 -> "☁️"
+    else -> if (isDay) "☀️" else "🌙"
 }
 
 private fun apiErrorMessage(status: Int, body: String): String = try {
@@ -240,13 +243,14 @@ class RefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 private val launcherIconUpdateLock = Any()
 
 private fun updateLauncherIcon(context: Context, weather: Weather, expectedCity: City? = null): Unit = synchronized(launcherIconUpdateLock) {
-    val iconType = when {
-        weather.emoji.contains("⛈") -> "storm"
-        weather.emoji.contains("🌧") -> "rain"
-        weather.emoji.contains("❄") -> "snow"
-        weather.emoji.contains("🌨") -> "mixed"
-        weather.emoji.contains("🌫") -> "fog"
-        else -> "clear"
+    val iconType = when (weather.precipType) {
+        0 -> "clear"
+        1 -> "rain"
+        2 -> "snow"
+        3 -> "mixed"
+        4 -> "storm"
+        5 -> "fog"
+        else -> "cloudy"
     }
     val t = weather.temp.coerceIn(-39, 39)
     val tempPart = if (t < 0) "m${-t}" else "p$t"

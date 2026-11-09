@@ -1,0 +1,10 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/weather_cloudy" />
+    <item>
+        <vector android:width="128dp" android:height="128dp" android:viewportWidth="128" android:viewportHeight="128">
+            <path android:fillColor="#9B0C2341" android:pathData="M33.49,76.94 L33.49,68.44 L50.20,68.44 L50.20,76.94 L33.49,76.94 Z M75.41,88.78 L66.90,88.78 L66.90,56.72 Q62.24,61.08 55.91,63.17 L55.91,55.45 Q59.24,54.36 63.15,51.33 Q67.05,48.28 68.51,44.22 L75.41,44.22 L75.41,88.78 Z" />
+            <path android:fillColor="#FFFFFFFF" android:pathData="M31.99,74.44 L31.99,65.94 L48.70,65.94 L48.70,74.44 L31.99,74.44 Z M73.91,86.28 L65.40,86.28 L65.40,54.22 Q60.74,58.58 54.41,60.67 L54.41,52.95 Q57.74,51.86 61.65,48.83 Q65.55,45.78 67.01,41.72 L73.91,41.72 L73.91,86.28 Z" />
+            <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.21" android:pathData="M96.01,54.28 C96.01,57.04 93.77,59.28 91.01,59.28 C88.25,59.28 86.01,57.04 86.01,54.28 C86.01,51.52 88.25,49.28 91.01,49.28 C93.77,49.28 96.01,51.52 96.01,54.28 Z" />
+        </vector>
+    </item>
+</layer-list>
