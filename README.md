@@ -12,7 +12,19 @@
 
 ## Сборка
 
-Требуются Android SDK Platform 35, Build Tools 35.0.0, Gradle 8.11.1 и JDK 17. Инструменты разработчика находятся в `work/tools` рядом с проектом. Для отладки выполните `gradle assembleDebug`; для компактной release-сборки с R8 и удалением неиспользуемых ресурсов — `gradle assembleRelease`. Release APK создаётся неподписанным в `app/build/outputs/apk/release/app-release-unsigned.apk`; для установки или публикации его нужно подписать своим ключом.
+Требуются Android SDK Platform 35, Build Tools 35.0.0, Gradle 8.11.1 и JDK 17. Инструменты разработчика находятся в `work/tools` рядом с проектом. Для отладки выполните `gradle assembleDebug`. Release-сборку можно запустить скриптом из корня проекта:
+
+Windows CMD:
+```bat
+tools\build-release.cmd
+```
+
+macOS / Linux / Git Bash:
+```bash
+bash ./tools/build-release.sh
+```
+
+Скрипты используют Gradle 8.11.1 и JDK из `work/tools`, если они есть; иначе ищут Gradle в `PATH` и используют `JAVA_HOME` или Java из `PATH`. Release APK создаётся неподписанным в `app/build/outputs/apk/release/app-release-unsigned.apk`; для установки или публикации его нужно подписать своим ключом.
 
 ## Ресурсы значка приложения
 
